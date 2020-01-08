@@ -11,7 +11,7 @@ Comment ça marche un **langage de programmation** ? Que se passe-t-il donc entr
 
 # Déroulé des séances
 
-Les séances commenceront toujours par un rapide exposé durant entre 15 et 30 minutes pour présenter les concepts abordés dans l'atelier. Les participants seront ensuite invités à se mettre en groupe pour programmer et réaliser les ateliers. Les organisateurs seront alors disponibles pour guider les réalisations et répondre à toutes les éventuelles questions (dans la mesure de leurs capacités bien sûr). Des multiprises seront fournies pour permettre aux participants de brancher leurs ordinateurs. Les ressources utilisées ainsi que le contenu des présentation seront rendues disponible en ligne à la fin de chaque séance.
+Les séances commenceront toujours par un rapide exposé durant entre 15 et 30 minutes pour présenter les concepts abordés dans l'atelier. Les participants seront ensuite invités à se mettre en groupe pour programmer et réaliser les ateliers. Les organisateurs seront alors disponibles pour guider les réalisations et répondre à toutes les éventuelles questions (dans la mesure de leurs capacités bien sûr). Des multiprises seront fournies pour permettre aux participants de brancher leurs ordinateurs. Les ressources utilisées ainsi que le contenu des présentations seront rendus disponibles en ligne à la fin de chaque séance.
 
 
 Pour toutes question, n'hésitez pas à contacter l'association CodeAnon à l'adresse [contact@codeanon.org](mailto:contact@codeanon.org), ou les organisateurs des ateliers : [arthur.correnson@univ-tlse3.fr](arthur.correnson@univ-tlse3.fr) et [tristan.barriere@univ-tlse3.fr](tristan.barriere@univ-tlse3.fr)
