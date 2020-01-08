@@ -6,7 +6,7 @@ Comment ça marche un **langage de programmation** ? Que se passe-t-il donc entr
 
 + **Séance 1 - Introduction** : Mardi 14 Janvier 2020 - 18h/22h, Université Paul Sabatier (salle U3-01) 
 + **Séance 2 - Programmation Assembleur** : Mardi 21 Janvier 2020 - 18h/22h, Université Paul Sabatier (salle U3-03)
-+ **Séance 3 - Emulation** : Mardi 21 Janvier 2020 - 18h/22h, Université Paul Sabatier (salle U3-01)
++ **Séance 3 - Emulation** : Mardi 28 Janvier 2020 - 18h/22h, Université Paul Sabatier (salle U3-01)
 + **Séance 4+** : Prochainement...
 
 # Déroulé des séances
