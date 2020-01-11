@@ -1,0 +1,135 @@
+import array
+import pygame
+from pygame.locals import *
+
+
+class CHP8:
+    def __init__(self, stack_size=16, registers=16):
+        # technical specifications
+        self.ram_size = 250
+        self.stack_size = stack_size
+        self.registers = registers
+
+        # init
+        pygame.init()
+        self.screen = pygame.display.set_mode((400, 400))
+
+        # RAM
+        self.memory = array.array('H', [0 for _ in range(self.ram_size)])
+        # UTILS REGISTERS
+        self.registers = array.array('H', [0 for _ in range(self.registers)])
+        # ADDRESS REGISTER
+        self.address_register = 0
+        # STACK
+        self.stack = array.array('H', [0 for _ in range(self.stack_size)])
+        # PROGRAM COUNTER
+        self.program_counter = 0
+
+        # KEYBOARD STATE
+        self.keyboard = {
+            K_a: False,
+            K_z: False,
+            K_e: False,
+            K_q: False,
+            K_s: False,
+            K_d: False,
+            K_w: False,
+            K_x: False,
+            K_c: False
+        }
+
+    def safe_register(self, reg):
+        return 0 <= reg < self.registers
+
+    def safe_value(self, val):
+        return 0 <= val <= 255
+
+    def safe_address(self, adr):
+        return 0 <= adr <= self.ram_size
+
+    def do_add_reg(self, reg0, reg1):
+        assert self.safe_register(reg0), "register error [{reg0}]"
+        assert self.safe_register(reg1), "register error [{reg1}]"
+        _sum = self.registers[reg0] + self.registers[reg1]
+        if _sum > 255:
+            self.registers[reg0] = _sum
+        else:
+            self.registers[reg0] = 255
+
+    def do_sub_reg(self, reg0, reg1):
+        assert self.safe_register(reg0), "register error [{reg0}]"
+        assert self.safe_register(reg1), "register error [{reg1}]"
+        _sub = self.registers[reg0] - self.registers[reg1]
+        if _sub >= 0:
+            self.registers[reg0] = _sub
+        else:
+            self.registers[reg0] = 0
+
+    def do_load_address(self, adr):
+        assert self.safe_address(adr), "address error [{adr}]"
+        self.address_register = adr
+
+    def do_load_value(self, reg, val):
+        assert self.safe_register(reg), "register error [{adr}]"
+        assert self.safe_value(val), "value error [val]"
+        self.registers[reg] = val
+
+    def do_skip_if_equal(self, reg, val):
+        assert self.safe_register(reg), "register error [{adr}]"
+        assert self.safe_value(val), "value error [{val}]"
+        if self.registers[reg] == val:
+            self.program_counter += 2
+
+    def do_skip_if_not_equal(self, reg, val):
+        assert self.safe_register(reg), "register error [{adr}]"
+        assert self.safe_value(val), "value error [{val}]"
+        if self.registers[reg] != val:
+            self.program_counter += 2
+
+    def do_jump(self, adr):
+        assert self.safe_address(adr), "value error [{adr}]"
+        self.program_counter = adr
+
+    def do_pixel(self, reg0, reg1):
+        white = pygame.Color(255, 255, 255)
+        rect = (reg0, reg1, 10, 10)
+        pygame.draw.rect(self.screen, white, rect)
+
+    def update_keyboard_state(self):
+        _state = pygame.key.get_pressed()
+        for key in self.keyboard:
+            self.keyboard[key] = _state[key]
+
+    def execute_next_instruction(self):
+        # ============================
+        # L'objectif de cet atelier est de compléter cette fonction
+        # ....
+        # ....
+        # ============================
+        pass
+
+    def start(self):
+        pygame.init()
+        running = True
+        clock = pygame.time.Clock()
+        while running and self.program_counter < self.ram_size:
+            # FPS
+            clock.tick(30)
+
+            # EVENT HANDLING
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            # CLEAN THE SCREEN
+            self.screen.fill(pygame.Color(0, 0, 0))
+            # UPDATE THE KEYBOARD STATE
+            self.update_keyboard_state()
+            # EXECUTE THE NEXT INSTRUCTION
+            self.execute_next_instruction()
+            # UPDATE THE SCREEN
+            pygame.display.flip()
+
+
+vm = CHP8()
+vm.start()
