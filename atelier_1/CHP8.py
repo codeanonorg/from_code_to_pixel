@@ -8,22 +8,25 @@ class CHP8:
         # technical specifications
         self.ram_size = 250
         self.stack_size = stack_size
-        self.registers = registers
+        self.registers_num = registers
 
         # init
         pygame.init()
-        self.screen = pygame.display.set_mode((400, 400))
+        self.screen = pygame.display.set_mode((640, 320))
 
         # RAM
-        self.memory = array.array('H', [0 for _ in range(self.ram_size)])
+        self.memory = array.array('B', [0 for _ in range(self.ram_size)])
         # UTILS REGISTERS
-        self.registers = array.array('H', [0 for _ in range(self.registers)])
+        self.registers = array.array(
+            'B', [0 for _ in range(self.registers_num)])
         # ADDRESS REGISTER
         self.address_register = 0
         # STACK
-        self.stack = array.array('H', [0 for _ in range(self.stack_size)])
+        self.stack = array.array('B', [0 for _ in range(self.stack_size)])
         # PROGRAM COUNTER
         self.program_counter = 0
+
+        self.screen_buff = [[0 for i in range(32)] for j in range(64)]
 
         # KEYBOARD STATE
         self.keyboard = {
@@ -39,7 +42,7 @@ class CHP8:
         }
 
     def safe_register(self, reg):
-        return 0 <= reg < self.registers
+        return 0 <= reg < self.registers_num
 
     def safe_value(self, val):
         return 0 <= val <= 255
@@ -81,7 +84,7 @@ class CHP8:
             self.program_counter += 2
 
     def do_skip_if_not_equal(self, reg, val):
-        assert self.safe_register(reg), "register error [{adr}]"
+        assert self.safe_register(reg), "register error [{reg}]"
         assert self.safe_value(val), "value error [{val}]"
         if self.registers[reg] != val:
             self.program_counter += 2
@@ -90,10 +93,28 @@ class CHP8:
         assert self.safe_address(adr), "value error [{adr}]"
         self.program_counter = adr
 
-    def do_pixel(self, reg0, reg1):
+    def do_draw(self, reg0, reg1, val):
+        assert self.safe_register(reg0), "register error [{reg0}]"
+        assert self.safe_register(reg1), "register error [{reg1}]"
+        assert self.safe_value(val), "value error [{val}]"
+        _x = self.registers[reg0]
+        _y = self.registers[reg1]
+        for i in range(val):
+            for j in range(8):
+                _sprite = self.memory[self.address_register+i]
+                if ((_sprite >> (8-j-1)) & 0x0001) == 1:
+                    if self.screen_buff[_x+j][_y+i] == 1:
+                        # COLLISION
+                        self.registers[15] = 1
+                    self.screen_buff[_x+j][_y+i] = 1
+
+    def update_screen(self):
         white = pygame.Color(255, 255, 255)
-        rect = (reg0, reg1, 10, 10)
-        pygame.draw.rect(self.screen, white, rect)
+        for x in range(64):
+            for y in range(32):
+                if(self.screen_buff[x][y] == 1):
+                    rect = (x*10, y*10, 10, 10)
+                    pygame.draw.rect(self.screen, white, rect)
 
     def update_keyboard_state(self):
         _state = pygame.key.get_pressed()
@@ -128,6 +149,7 @@ class CHP8:
             # EXECUTE THE NEXT INSTRUCTION
             self.execute_next_instruction()
             # UPDATE THE SCREEN
+            self.update_screen()
             pygame.display.flip()
 
 
