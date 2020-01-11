@@ -3,6 +3,30 @@ import pygame
 from pygame.locals import *
 
 
+def get_x(b):
+    return (b >> 8) & 0xF
+
+
+def get_y(b):
+    return (b >> 12) & 0xF
+
+
+def get_kk(b):
+    return b & 0xFF
+
+
+def get_nnn(b):
+    return b & 0xFFF
+
+
+def get_n(b):
+    return b & 0xF
+
+
+def get_opcode(a, b):
+    return (a << 8) | b
+
+
 class CHP8:
     def __init__(self, stack_size=16, registers=16):
         # technical specifications
@@ -33,12 +57,30 @@ class CHP8:
             K_a: False,
             K_z: False,
             K_e: False,
+            K_r: False,
             K_q: False,
             K_s: False,
             K_d: False,
+            K_f: False,
             K_w: False,
             K_x: False,
-            K_c: False
+            K_c: False,
+            K_v: False
+        }
+
+        self.key_val = {
+            K_a: 4,
+            K_z: 5,
+            K_e: 6,
+            K_r: 0xD,
+            K_q: 7,
+            K_s: 8,
+            K_d: 9,
+            K_f: 0xE,
+            K_w: 0xA,
+            K_x: 0,
+            K_c: 0xB,
+            K_v: 0xF
         }
 
     def safe_register(self, reg):
@@ -58,6 +100,12 @@ class CHP8:
             self.registers[reg0] = _sum
         else:
             self.registers[reg0] = 255
+
+    def do_add_pointer(self, reg):
+        assert self.safe_register(reg), f"register error [{reg}]"
+        self.address_register += self.registers[reg]
+        assert self.safe_address(
+            self.address_register), f"address error [{reg}]"
 
     def do_sub_reg(self, reg0, reg1):
         assert self.safe_register(reg0), f"register error [{reg0}]"
@@ -108,6 +156,17 @@ class CHP8:
                         self.registers[15] = 1
                     self.screen_buff[_x+j][_y+i] = 1
 
+    def do_load_key(self, reg):
+        assert self.safe_register(reg), f"register error [{reg}]"
+        pressed = False
+        for key in self.keyboard:
+            if self.keyboard[key]:
+                self.registers[reg] = self.key_val[key]
+                pressed = True
+
+        if not pressed:
+            self.program_counter -= 2
+
     def update_screen(self):
         white = pygame.Color(255, 255, 255)
         for x in range(64):
@@ -127,7 +186,24 @@ class CHP8:
         # ....
         # ....
         # ============================
-        pass
+        _hig = self.memory[self.program_counter]
+        _low = self.memory[self.program_counter+1]
+        opcode = get_opcode(_hig, _low)
+        _x = get_x(opcode)
+        _y = get_y(opcode)
+        _n = get_n(opcode)
+        _kk = get_kk(opcode)
+        _nnn = get_nnn(opcode)
+
+        if ((opcode >> 12) & 0xF) == 0xA:
+            self.do_load_address(_nnn)
+        elif ((opcode >> 12) & 0xF) == 0xD:
+            self.do_draw(_x, _y, _n)
+        elif ((opcode >> 12) & 0xF) == 0xD:
+            pass
+        # ...
+
+        self.program_counter += 2
 
     def read_rom(self, filename):
         with open(filename, 'rb') as f:
