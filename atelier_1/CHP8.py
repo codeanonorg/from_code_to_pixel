@@ -51,8 +51,8 @@ class CHP8:
         return 0 <= adr <= self.ram_size
 
     def do_add_reg(self, reg0, reg1):
-        assert self.safe_register(reg0), "register error [{reg0}]"
-        assert self.safe_register(reg1), "register error [{reg1}]"
+        assert self.safe_register(reg0), f"register error [{reg0}]"
+        assert self.safe_register(reg1), f"register error [{reg1}]"
         _sum = self.registers[reg0] + self.registers[reg1]
         if _sum > 255:
             self.registers[reg0] = _sum
@@ -60,8 +60,8 @@ class CHP8:
             self.registers[reg0] = 255
 
     def do_sub_reg(self, reg0, reg1):
-        assert self.safe_register(reg0), "register error [{reg0}]"
-        assert self.safe_register(reg1), "register error [{reg1}]"
+        assert self.safe_register(reg0), f"register error [{reg0}]"
+        assert self.safe_register(reg1), f"register error [{reg1}]"
         _sub = self.registers[reg0] - self.registers[reg1]
         if _sub >= 0:
             self.registers[reg0] = _sub
@@ -69,34 +69,34 @@ class CHP8:
             self.registers[reg0] = 0
 
     def do_load_address(self, adr):
-        assert self.safe_address(adr), "address error [{adr}]"
+        assert self.safe_address(adr), f"address error [{adr}]"
         self.address_register = adr
 
     def do_load_value(self, reg, val):
-        assert self.safe_register(reg), "register error [{adr}]"
-        assert self.safe_value(val), "value error [val]"
+        assert self.safe_register(reg), f"register error [{adr}]"
+        assert self.safe_value(val), f"value error [{val}]"
         self.registers[reg] = val
 
     def do_skip_if_equal(self, reg, val):
-        assert self.safe_register(reg), "register error [{adr}]"
-        assert self.safe_value(val), "value error [{val}]"
+        assert self.safe_register(reg), f"register error [{adr}]"
+        assert self.safe_value(val), f"value error [{val}]"
         if self.registers[reg] == val:
             self.program_counter += 2
 
     def do_skip_if_not_equal(self, reg, val):
-        assert self.safe_register(reg), "register error [{reg}]"
-        assert self.safe_value(val), "value error [{val}]"
+        assert self.safe_register(reg), f"register error [{reg}]"
+        assert self.safe_value(val), f"value error [{val}]"
         if self.registers[reg] != val:
             self.program_counter += 2
 
     def do_jump(self, adr):
-        assert self.safe_address(adr), "value error [{adr}]"
+        assert self.safe_address(adr), f"value error [{adr}]"
         self.program_counter = adr
 
     def do_draw(self, reg0, reg1, val):
-        assert self.safe_register(reg0), "register error [{reg0}]"
-        assert self.safe_register(reg1), "register error [{reg1}]"
-        assert self.safe_value(val), "value error [{val}]"
+        assert self.safe_register(reg0), f"register error [{reg0}]"
+        assert self.safe_register(reg1), f"register error [{reg1}]"
+        assert self.safe_value(val), f"value error [{val}]"
         _x = self.registers[reg0]
         _y = self.registers[reg1]
         for i in range(val):
@@ -129,6 +129,14 @@ class CHP8:
         # ============================
         pass
 
+    def read_rom(self, filename):
+        with open(filename, 'rb') as f:
+            self.memory[0] = int.from_bytes(f.read(1), "little")
+            ram_i = 1
+            while f != b'' and ram_i < self.ram_size:
+                self.memory[ram_i] = int.from_bytes(f.read(1), "little")
+                ram_i = ram_i+1
+
     def start(self):
         pygame.init()
         running = True
@@ -154,4 +162,5 @@ class CHP8:
 
 
 vm = CHP8()
+vm.read_rom("./atelier_1/clou_asm.rom")
 vm.start()
