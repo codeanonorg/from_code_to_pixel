@@ -47,6 +47,8 @@ class CHP8:
         self.address_register = 0
         # STACK
         self.stack = array.array('B', [0 for _ in range(self.stack_size)])
+        # STACK POINTER
+        self.stack_pointer = 0
         # PROGRAM COUNTER
         self.program_counter = 0
 
@@ -104,6 +106,19 @@ class CHP8:
         _state = pygame.key.get_pressed()
         for key in self.keyboard:
             self.keyboard[key] = _state[key]
+
+    def do_ret(self):
+        """ 00EE - RET """
+        self.program_counter = self.stack[self.stack_pointer]
+        self.stack[self.stack_pointer] = 0
+        self.stack_pointer -= 1
+
+    def do_call(self, adr):
+        """ 2nnn - CALL addr """
+        assert self.safe_address(adr), f"address error [{adr}]"
+        self.stack_pointer += 1
+        self.stack[self.stack_pointer] = self.program_counter + 2
+        self.program_counter = adr
 
     def do_add_val(self, reg, val):
         """ 7xkk - ADD Vx, byte """
