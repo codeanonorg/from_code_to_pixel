@@ -252,8 +252,6 @@ class CHP8:
         pygame.init()
         running = True
         clock = pygame.time.Clock()
-        self.memory[0] = 0xFF
-        self.registers[0] = 10
         while running and self.program_counter < self.ram_size:
             # FPS
             clock.tick(30)
@@ -268,7 +266,6 @@ class CHP8:
             self.update_keyboard_state()
             # EXECUTE THE NEXT INSTRUCTION
             # self.execute_next_instruction()
-            self.do_draw(0, 0, 1)
             # UPDATE THE SCREEN
             self.update_screen()
             pygame.display.flip()
