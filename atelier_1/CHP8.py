@@ -52,7 +52,7 @@ class CHP8:
         # PROGRAM COUNTER
         self.program_counter = 0
 
-        self.screen_buff = [[0 for i in range(32)] for j in range(64)]
+        self.screen_buff = [[0 for i in range(64)] for j in range(32)]
 
         # KEYBOARD STATE
         self.keyboard = {
@@ -96,8 +96,8 @@ class CHP8:
 
     def update_screen(self):
         white = pygame.Color(255, 255, 255)
-        for x in range(64):
-            for y in range(32):
+        for x in range(32):
+            for y in range(64):
                 if(self.screen_buff[x][y] == 1):
                     rect = (x*10, y*10, 10, 10)
                     pygame.draw.rect(self.screen, white, rect)
@@ -203,7 +203,7 @@ class CHP8:
         """ Dxyn - DRW Vx, Vy, nibble """
         assert self.safe_register(reg0), f"register error [{reg0}]"
         assert self.safe_register(reg1), f"register error [{reg1}]"
-        assert self.safe_value(nibble), f"value error [{val}]"
+        assert self.safe_value(nibble), f"value error [{nibble}]"
         _x = self.registers[reg0]
         _y = self.registers[reg1]
         for i in range(nibble):
@@ -252,10 +252,11 @@ class CHP8:
         pygame.init()
         running = True
         clock = pygame.time.Clock()
+        self.memory[0] = 0xFF
+        self.registers[0] = 10
         while running and self.program_counter < self.ram_size:
             # FPS
             clock.tick(30)
-
             # EVENT HANDLING
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -266,7 +267,8 @@ class CHP8:
             # UPDATE THE KEYBOARD STATE
             self.update_keyboard_state()
             # EXECUTE THE NEXT INSTRUCTION
-            self.execute_next_instruction()
+            # self.execute_next_instruction()
+            self.do_draw(0, 0, 1)
             # UPDATE THE SCREEN
             self.update_screen()
             pygame.display.flip()
