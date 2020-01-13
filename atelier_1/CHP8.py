@@ -69,16 +69,16 @@ class CHP8:
         }
 
         self.key_val = {
-            K_a: 4,
-            K_z: 5,
-            K_e: 6,
+            K_a: 0x4,
+            K_z: 0x5,
+            K_e: 0x6,
             K_r: 0xD,
-            K_q: 7,
-            K_s: 8,
-            K_d: 9,
+            K_q: 0x7,
+            K_s: 0x8,
+            K_d: 0x9,
             K_f: 0xE,
             K_w: 0xA,
-            K_x: 0,
+            K_x: 0x0,
             K_c: 0xB,
             K_v: 0xF
         }
@@ -92,81 +92,6 @@ class CHP8:
     def safe_address(self, adr):
         return 0 <= adr <= self.ram_size
 
-    def do_add_reg(self, reg0, reg1):
-        assert self.safe_register(reg0), f"register error [{reg0}]"
-        assert self.safe_register(reg1), f"register error [{reg1}]"
-        _sum = self.registers[reg0] + self.registers[reg1]
-        if _sum > 255:
-            self.registers[reg0] = _sum
-        else:
-            self.registers[reg0] = 255
-
-    def do_add_pointer(self, reg):
-        assert self.safe_register(reg), f"register error [{reg}]"
-        self.address_register += self.registers[reg]
-        assert self.safe_address(
-            self.address_register), f"address error [{reg}]"
-
-    def do_sub_reg(self, reg0, reg1):
-        assert self.safe_register(reg0), f"register error [{reg0}]"
-        assert self.safe_register(reg1), f"register error [{reg1}]"
-        _sub = self.registers[reg0] - self.registers[reg1]
-        if _sub >= 0:
-            self.registers[reg0] = _sub
-        else:
-            self.registers[reg0] = 0
-
-    def do_load_address(self, adr):
-        assert self.safe_address(adr), f"address error [{adr}]"
-        self.address_register = adr
-
-    def do_load_value(self, reg, val):
-        assert self.safe_register(reg), f"register error [{adr}]"
-        assert self.safe_value(val), f"value error [{val}]"
-        self.registers[reg] = val
-
-    def do_skip_if_equal(self, reg, val):
-        assert self.safe_register(reg), f"register error [{adr}]"
-        assert self.safe_value(val), f"value error [{val}]"
-        if self.registers[reg] == val:
-            self.program_counter += 2
-
-    def do_skip_if_not_equal(self, reg, val):
-        assert self.safe_register(reg), f"register error [{reg}]"
-        assert self.safe_value(val), f"value error [{val}]"
-        if self.registers[reg] != val:
-            self.program_counter += 2
-
-    def do_jump(self, adr):
-        assert self.safe_address(adr), f"value error [{adr}]"
-        self.program_counter = adr
-
-    def do_draw(self, reg0, reg1, val):
-        assert self.safe_register(reg0), f"register error [{reg0}]"
-        assert self.safe_register(reg1), f"register error [{reg1}]"
-        assert self.safe_value(val), f"value error [{val}]"
-        _x = self.registers[reg0]
-        _y = self.registers[reg1]
-        for i in range(val):
-            for j in range(8):
-                _sprite = self.memory[self.address_register+i]
-                if ((_sprite >> (8-j-1)) & 0x0001) == 1:
-                    if self.screen_buff[_x+j][_y+i] == 1:
-                        # COLLISION
-                        self.registers[15] = 1
-                    self.screen_buff[_x+j][_y+i] = 1
-
-    def do_load_key(self, reg):
-        assert self.safe_register(reg), f"register error [{reg}]"
-        pressed = False
-        for key in self.keyboard:
-            if self.keyboard[key]:
-                self.registers[reg] = self.key_val[key]
-                pressed = True
-
-        if not pressed:
-            self.program_counter -= 2
-
     def update_screen(self):
         white = pygame.Color(255, 255, 255)
         for x in range(64):
@@ -179,6 +104,101 @@ class CHP8:
         _state = pygame.key.get_pressed()
         for key in self.keyboard:
             self.keyboard[key] = _state[key]
+
+    def do_add_val(self, reg, val):
+        """ 7xkk - ADD Vx, byte """
+        assert self.safe_register(reg), f"register error [{reg}]"
+        assert self.safe_value(val), f"value error [{val}]"
+        _sum = self.registers[reg] + val
+        if _sum > 255:
+            self.registers[reg] = _sum
+        else:
+            self.registers[reg] = 255
+
+    def do_add_reg(self, reg0, reg1):
+        """ 8xy4 - ADD Vx, Vy """
+        assert self.safe_register(reg0), f"register error [{reg0}]"
+        assert self.safe_register(reg1), f"register error [{reg1}]"
+        _sum = self.registers[reg0] + self.registers[reg1]
+        if _sum > 255:
+            self.registers[reg0] = _sum
+        else:
+            self.registers[reg0] = 255
+
+    def do_add_pointer(self, reg):
+        """ Fx1E - ADD I, Vx """
+        assert self.safe_register(reg), f"register error [{reg}]"
+        self.address_register += self.registers[reg]
+        assert self.safe_address(
+            self.address_register), f"address error [{reg}]"
+
+    def do_sub_reg(self, reg0, reg1):
+        """ 8xy5 - SUB Vx, Vy """
+        assert self.safe_register(reg0), f"register error [{reg0}]"
+        assert self.safe_register(reg1), f"register error [{reg1}]"
+        _sub = self.registers[reg0] - self.registers[reg1]
+        if _sub >= 0:
+            self.registers[reg0] = _sub
+        else:
+            self.registers[reg0] = 0
+
+    def do_load_address(self, adr):
+        """ Annn - LD I, addr """
+        assert self.safe_address(adr), f"address error [{adr}]"
+        self.address_register = adr
+
+    def do_load_value(self, reg, val):
+        """ 6xkk - LD Vx, byte """
+        assert self.safe_register(reg), f"register error [{adr}]"
+        assert self.safe_value(val), f"value error [{val}]"
+        self.registers[reg] = val
+
+    def do_load_key(self, reg):
+        """ Fx0A - LD Vx, K """
+        assert self.safe_register(reg), f"register error [{reg}]"
+        pressed = False
+        for key in self.keyboard:
+            if self.keyboard[key]:
+                self.registers[reg] = self.key_val[key]
+                pressed = True
+
+        if not pressed:
+            self.program_counter -= 2
+
+    def do_skip_if_equal(self, reg, val):
+        """ 3xkk - SE Vx, byte """
+        assert self.safe_register(reg), f"register error [{adr}]"
+        assert self.safe_value(val), f"value error [{val}]"
+        if self.registers[reg] == val:
+            self.program_counter += 2
+
+    def do_skip_if_not_equal(self, reg, val):
+        """ 4xkk - SNE Vx, byte """
+        assert self.safe_register(reg), f"register error [{reg}]"
+        assert self.safe_value(val), f"value error [{val}]"
+        if self.registers[reg] != val:
+            self.program_counter += 2
+
+    def do_jump(self, adr):
+        """ 1nnn - JP addr """
+        assert self.safe_address(adr), f"value error [{adr}]"
+        self.program_counter = adr
+
+    def do_draw(self, reg0, reg1, nibble):
+        """ Dxyn - DRW Vx, Vy, nibble """
+        assert self.safe_register(reg0), f"register error [{reg0}]"
+        assert self.safe_register(reg1), f"register error [{reg1}]"
+        assert self.safe_value(nibble), f"value error [{val}]"
+        _x = self.registers[reg0]
+        _y = self.registers[reg1]
+        for i in range(nibble):
+            for j in range(8):
+                _sprite = self.memory[self.address_register+i]
+                if ((_sprite >> (8-j-1)) & 0x0001) == 1:
+                    if self.screen_buff[_x+j][_y+i] == 1:
+                        # COLLISION
+                        self.registers[15] = 1
+                    self.screen_buff[_x+j][_y+i] = 1
 
     def execute_next_instruction(self):
         # ============================
@@ -238,5 +258,5 @@ class CHP8:
 
 
 vm = CHP8()
-vm.read_rom("./atelier_1/clou_asm.rom")
+vm.read_rom("./clou_asm.rom")
 vm.start()
