@@ -36,7 +36,7 @@ class CHP8:
 
         # init
         pygame.init()
-        self.screen = pygame.display.set_mode((640, 320))
+        self.screen = pygame.display.set_mode((640, 640))
 
         # RAM
         self.memory = [0 for _ in range(self.ram_size)]
@@ -51,7 +51,7 @@ class CHP8:
         # PROGRAM COUNTER
         self.program_counter = 0x200
 
-        self.screen_buff = [[0 for i in range(64)] for j in range(32)]
+        self.screen_buff = [[0 for i in range(64)] for j in range(64)]
 
         # KEYBOARD STATE
         self.keyboard = {
@@ -95,7 +95,7 @@ class CHP8:
 
     def update_screen(self):
         white = pygame.Color(255, 255, 255)
-        for x in range(32):
+        for x in range(64):
             for y in range(64):
                 if(self.screen_buff[x][y] == 1):
                     rect = (x*10, y*10, 10, 10)
@@ -184,7 +184,7 @@ class CHP8:
         assert self.safe_register(reg), f"register error [{reg}]"
         assert self.safe_value(val), f"value error [{val}]"
         if self.registers[reg] == val:
-            print("SKIP")
+            # print("SKIP")
             self.program_counter += 2
 
     def do_skip_if_not_equal(self, reg, val):
@@ -206,7 +206,7 @@ class CHP8:
         assert self.safe_value(nibble), f"value error [{nibble}]"
         _x = self.registers[reg0]
         _y = self.registers[reg1]
-        print("drw", _x, _y)
+        # print("drw", _x, _y)
         for i in range(nibble):
             for j in range(8):
                 _sprite = self.memory[self.address_register+i]
@@ -214,7 +214,9 @@ class CHP8:
                     if self.screen_buff[_x+j][_y+i] == 1:
                         # COLLISION
                         self.registers[15] = 1
-                    self.screen_buff[_x+j][_y+i] = 1
+                        self.screen_buff[_x+j][_y+i] = 0
+                    else:
+                        self.screen_buff[_x+j][_y+i] = 1
 
     def execute_next_instruction(self):
         # ============================
@@ -225,13 +227,13 @@ class CHP8:
         _hig = self.memory[self.program_counter]
         _low = self.memory[self.program_counter+1]
         opcode = get_opcode(_hig, _low)
-        print(
-            hex(opcode), f'Va : {hex(self.registers[0xA])} Vb : {hex(self.registers[0xB])}')
         _x = get_x(opcode)
         _y = get_y(opcode)
         _n = get_n(opcode)
         _kk = get_kk(opcode)
         _nnn = get_nnn(opcode)
+
+        # print(hex(opcode))
 
         if ((opcode >> 12) & 0xF) == 0xA:
             self.do_load_address(_nnn)
@@ -259,8 +261,8 @@ class CHP8:
             self.do_skip_if_not_equal(_x, _kk)
         elif ((opcode >> 12) & 0xF) == 0x1:
             self.do_jump(_nnn)
-        else:
-            raise RuntimeError(f"Unknown instruction {hex(opcode)}")
+        # else:
+            # raise RuntimeError(f"Unknown instruction {hex(opcode)}")
 
         self.program_counter += 2
 
@@ -288,6 +290,7 @@ class CHP8:
             self.screen.fill(pygame.Color(0, 0, 0))
             # UPDATE THE KEYBOARD STATE
             self.update_keyboard_state()
+            # print(self.keyboard)
             # EXECUTE THE NEXT INSTRUCTION
             self.execute_next_instruction()
             # UPDATE THE SCREEN
