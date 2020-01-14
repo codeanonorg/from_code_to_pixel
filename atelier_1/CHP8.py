@@ -8,7 +8,7 @@ def get_x(b):
 
 
 def get_y(b):
-    return (b >> 12) & 0xF
+    return (b >> 4) & 0xF
 
 
 def get_kk(b):
@@ -30,7 +30,7 @@ def get_opcode(a, b):
 class CHP8:
     def __init__(self, stack_size=16, registers=16):
         # technical specifications
-        self.ram_size = 250
+        self.ram_size = 1000
         self.stack_size = stack_size
         self.registers_num = registers
 
@@ -39,18 +39,17 @@ class CHP8:
         self.screen = pygame.display.set_mode((640, 320))
 
         # RAM
-        self.memory = array.array('B', [0 for _ in range(self.ram_size)])
+        self.memory = [0 for _ in range(self.ram_size)]
         # UTILS REGISTERS
-        self.registers = array.array(
-            'B', [0 for _ in range(self.registers_num)])
+        self.registers = [0 for _ in range(self.registers_num)]
         # ADDRESS REGISTER
-        self.address_register = 0
+        self.address_register = 0x200
         # STACK
-        self.stack = array.array('B', [0 for _ in range(self.stack_size)])
+        self.stack = [0 for _ in range(self.stack_size)]
         # STACK POINTER
         self.stack_pointer = 0
         # PROGRAM COUNTER
-        self.program_counter = 0
+        self.program_counter = 0x200
 
         self.screen_buff = [[0 for i in range(64)] for j in range(32)]
 
@@ -125,7 +124,7 @@ class CHP8:
         assert self.safe_register(reg), f"register error [{reg}]"
         assert self.safe_value(val), f"value error [{val}]"
         _sum = self.registers[reg] + val
-        if _sum > 255:
+        if _sum <= 255:
             self.registers[reg] = _sum
         else:
             self.registers[reg] = 255
@@ -135,7 +134,7 @@ class CHP8:
         assert self.safe_register(reg0), f"register error [{reg0}]"
         assert self.safe_register(reg1), f"register error [{reg1}]"
         _sum = self.registers[reg0] + self.registers[reg1]
-        if _sum > 255:
+        if _sum <= 255:
             self.registers[reg0] = _sum
         else:
             self.registers[reg0] = 255
@@ -164,7 +163,7 @@ class CHP8:
 
     def do_load_value(self, reg, val):
         """ 6xkk - LD Vx, byte """
-        assert self.safe_register(reg), f"register error [{adr}]"
+        assert self.safe_register(reg), f"register error [{reg}]"
         assert self.safe_value(val), f"value error [{val}]"
         self.registers[reg] = val
 
@@ -182,9 +181,10 @@ class CHP8:
 
     def do_skip_if_equal(self, reg, val):
         """ 3xkk - SE Vx, byte """
-        assert self.safe_register(reg), f"register error [{adr}]"
+        assert self.safe_register(reg), f"register error [{reg}]"
         assert self.safe_value(val), f"value error [{val}]"
         if self.registers[reg] == val:
+            print("SKIP")
             self.program_counter += 2
 
     def do_skip_if_not_equal(self, reg, val):
@@ -197,7 +197,7 @@ class CHP8:
     def do_jump(self, adr):
         """ 1nnn - JP addr """
         assert self.safe_address(adr), f"value error [{adr}]"
-        self.program_counter = adr
+        self.program_counter = adr - 2
 
     def do_draw(self, reg0, reg1, nibble):
         """ Dxyn - DRW Vx, Vy, nibble """
@@ -206,6 +206,7 @@ class CHP8:
         assert self.safe_value(nibble), f"value error [{nibble}]"
         _x = self.registers[reg0]
         _y = self.registers[reg1]
+        print("drw", _x, _y)
         for i in range(nibble):
             for j in range(8):
                 _sprite = self.memory[self.address_register+i]
@@ -224,6 +225,8 @@ class CHP8:
         _hig = self.memory[self.program_counter]
         _low = self.memory[self.program_counter+1]
         opcode = get_opcode(_hig, _low)
+        print(
+            hex(opcode), f'Va : {hex(self.registers[0xA])} Vb : {hex(self.registers[0xB])}')
         _x = get_x(opcode)
         _y = get_y(opcode)
         _n = get_n(opcode)
@@ -234,16 +237,37 @@ class CHP8:
             self.do_load_address(_nnn)
         elif ((opcode >> 12) & 0xF) == 0xD:
             self.do_draw(_x, _y, _n)
-        elif ((opcode >> 12) & 0xF) == 0xD:
-            pass
-        # ...
+        elif opcode == 0x00EE:
+            self.do_ret()
+        elif ((opcode >> 12) & 0xF) == 0x2:
+            self.do_call(_nnn)
+        elif ((opcode >> 12) & 0xF) == 0x7:
+            self.do_add_val(_x, _kk)
+        elif ((opcode >> 12) & 0xF) == 0x8 and (opcode & 0x000F) == 0x4:
+            self.do_add_reg(_x, _y)
+        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x1E:
+            self.do_add_pointer(_x)
+        elif ((opcode >> 12) & 0xF) == 0x8 and (opcode & 0x000F) == 0x5:
+            self.do_sub_reg(_x, _y)
+        elif ((opcode >> 12) & 0xF) == 0x6:
+            self.do_load_value(_x, _kk)
+        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x000F) == 0xA:
+            self.do_load_key(_x)
+        elif ((opcode >> 12) & 0xF) == 0x3:
+            self.do_skip_if_equal(_x, _kk)
+        elif ((opcode >> 12) & 0xF) == 0x4:
+            self.do_skip_if_not_equal(_x, _kk)
+        elif ((opcode >> 12) & 0xF) == 0x1:
+            self.do_jump(_nnn)
+        else:
+            raise RuntimeError(f"Unknown instruction {hex(opcode)}")
 
         self.program_counter += 2
 
     def read_rom(self, filename):
         with open(filename, 'rb') as f:
-            self.memory[0] = int.from_bytes(f.read(1), "little")
-            ram_i = 1
+            self.memory[0x200] = int.from_bytes(f.read(1), "little")
+            ram_i = 0x201
             while f != b'' and ram_i < self.ram_size:
                 self.memory[ram_i] = int.from_bytes(f.read(1), "little")
                 ram_i = ram_i+1
@@ -254,7 +278,7 @@ class CHP8:
         clock = pygame.time.Clock()
         while running and self.program_counter < self.ram_size:
             # FPS
-            clock.tick(30)
+            clock.tick(60)
             # EVENT HANDLING
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -265,7 +289,7 @@ class CHP8:
             # UPDATE THE KEYBOARD STATE
             self.update_keyboard_state()
             # EXECUTE THE NEXT INSTRUCTION
-            # self.execute_next_instruction()
+            self.execute_next_instruction()
             # UPDATE THE SCREEN
             self.update_screen()
             pygame.display.flip()
@@ -273,4 +297,6 @@ class CHP8:
 
 vm = CHP8()
 vm.read_rom("./clou_asm.rom")
+# for i in range(0x200, vm.ram_size-2, 2):
+#     print(hex((vm.memory[i] << 8) | vm.memory[i+1]))
 vm.start()
