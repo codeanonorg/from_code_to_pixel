@@ -108,7 +108,7 @@ class CHP8:
 
     def do_ret(self):
         """ 00EE - RET """
-        self.program_counter = self.stack[self.stack_pointer]
+        self.program_counter = self.stack[self.stack_pointer] - 2
         self.stack[self.stack_pointer] = 0
         self.stack_pointer -= 1
 
@@ -161,11 +161,29 @@ class CHP8:
         assert self.safe_address(adr), f"address error [{adr}]"
         self.address_register = adr
 
+    def do_load_reg(self, reg0, reg1):
+        """ 8xy0 - LD Vx, Vy """
+        assert self.safe_register(reg0), f"address error [{reg0}]"
+        assert self.safe_register(reg1), f"address error [{reg1}]"
+        self.registers[reg0] = self.registers[reg1]
+
     def do_load_value(self, reg, val):
         """ 6xkk - LD Vx, byte """
         assert self.safe_register(reg), f"register error [{reg}]"
         assert self.safe_value(val), f"value error [{val}]"
         self.registers[reg] = val
+
+    def do_load_to_regs(self, reg):
+        """ Fx65 - LD Vx, [I] """
+        assert self.safe_register(reg), f"register error [{reg}]"
+        for i in range(0, reg+1):
+            self.registers[i] = self.memory[self.address_register + i]
+
+    def do_store_from_regs(self, reg):
+        """ Fx55 - LD [I], Vx """
+        assert self.safe_register(reg), f"register error [{reg}]"
+        for i in range(0, reg+1):
+            self.memory[self.address_register + i] = self.registers[i]
 
     def do_load_key(self, reg):
         """ Fx0A - LD Vx, K """
@@ -173,6 +191,7 @@ class CHP8:
         pressed = False
         for key in self.keyboard:
             if self.keyboard[key]:
+                print(f"KEY {key} LOADED")
                 self.registers[reg] = self.key_val[key]
                 pressed = True
 
@@ -206,7 +225,7 @@ class CHP8:
         assert self.safe_value(nibble), f"value error [{nibble}]"
         _x = self.registers[reg0]
         _y = self.registers[reg1]
-        # print("drw", _x, _y)
+        print("drw", _x, _y)
         for i in range(nibble):
             for j in range(8):
                 _sprite = self.memory[self.address_register+i]
@@ -233,36 +252,59 @@ class CHP8:
         _kk = get_kk(opcode)
         _nnn = get_nnn(opcode)
 
-        # print(hex(opcode))
-
         if ((opcode >> 12) & 0xF) == 0xA:
             self.do_load_address(_nnn)
+
         elif ((opcode >> 12) & 0xF) == 0xD:
             self.do_draw(_x, _y, _n)
+
         elif opcode == 0x00EE:
             self.do_ret()
+
         elif ((opcode >> 12) & 0xF) == 0x2:
             self.do_call(_nnn)
+
         elif ((opcode >> 12) & 0xF) == 0x7:
             self.do_add_val(_x, _kk)
+
         elif ((opcode >> 12) & 0xF) == 0x8 and (opcode & 0x000F) == 0x4:
             self.do_add_reg(_x, _y)
+
         elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x1E:
             self.do_add_pointer(_x)
+
         elif ((opcode >> 12) & 0xF) == 0x8 and (opcode & 0x000F) == 0x5:
             self.do_sub_reg(_x, _y)
+
         elif ((opcode >> 12) & 0xF) == 0x6:
             self.do_load_value(_x, _kk)
+
         elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x000F) == 0xA:
             self.do_load_key(_x)
+
         elif ((opcode >> 12) & 0xF) == 0x3:
             self.do_skip_if_equal(_x, _kk)
+
         elif ((opcode >> 12) & 0xF) == 0x4:
             self.do_skip_if_not_equal(_x, _kk)
+
         elif ((opcode >> 12) & 0xF) == 0x1:
             self.do_jump(_nnn)
-        # else:
-            # raise RuntimeError(f"Unknown instruction {hex(opcode)}")
+
+        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x29:
+            pass
+
+        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x55:
+            self.do_store_from_regs(_x)
+
+        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x65:
+            self.do_load_to_regs(_x)
+
+        elif ((opcode >> 12) & 0xF) == 0x8 and (opcode & 0x000F) == 0x0:
+            self.do_load_reg(_x, _y)
+
+        else:
+            raise RuntimeError(f"Unknown instruction {hex(opcode)}")
 
         self.program_counter += 2
 
@@ -292,7 +334,8 @@ class CHP8:
             self.update_keyboard_state()
             # print(self.keyboard)
             # EXECUTE THE NEXT INSTRUCTION
-            self.execute_next_instruction()
+            for _ in range(11):
+                self.execute_next_instruction()
             # UPDATE THE SCREEN
             self.update_screen()
             pygame.display.flip()
