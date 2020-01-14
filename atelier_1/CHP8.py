@@ -237,11 +237,7 @@ class CHP8:
                         self.screen_buff[_x+j][_y+i] = 1
 
     def execute_next_instruction(self):
-        # ============================
-        # L'objectif de cet atelier est de compléter cette fonction
-        # ....
-        # ....
-        # ============================
+
         _hig = self.memory[self.program_counter]
         _low = self.memory[self.program_counter+1]
         opcode = get_opcode(_hig, _low)
@@ -251,61 +247,11 @@ class CHP8:
         _kk = get_kk(opcode)
         _nnn = get_nnn(opcode)
 
-        if ((opcode >> 12) & 0xF) == 0xA:
-            self.do_load_address(_nnn)
-
-        elif ((opcode >> 12) & 0xF) == 0xD:
-            self.do_draw(_x, _y, _n)
-
-        elif opcode == 0x00EE:
-            self.do_ret()
-
-        elif ((opcode >> 12) & 0xF) == 0x2:
-            self.do_call(_nnn)
-
-        elif ((opcode >> 12) & 0xF) == 0x7:
-            self.do_add_val(_x, _kk)
-
-        elif ((opcode >> 12) & 0xF) == 0x8 and (opcode & 0x000F) == 0x4:
-            self.do_add_reg(_x, _y)
-
-        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x1E:
-            self.do_add_pointer(_x)
-
-        elif ((opcode >> 12) & 0xF) == 0x8 and (opcode & 0x000F) == 0x5:
-            self.do_sub_reg(_x, _y)
-
-        elif ((opcode >> 12) & 0xF) == 0x6:
-            self.do_load_value(_x, _kk)
-
-        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x000F) == 0xA:
-            self.do_load_key(_x)
-
-        elif ((opcode >> 12) & 0xF) == 0x3:
-            self.do_skip_if_equal(_x, _kk)
-
-        elif ((opcode >> 12) & 0xF) == 0x4:
-            self.do_skip_if_not_equal(_x, _kk)
-
-        elif ((opcode >> 12) & 0xF) == 0x1:
-            self.do_jump(_nnn)
-
-        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x29:
-            pass
-
-        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x55:
-            self.do_store_from_regs(_x)
-
-        elif ((opcode >> 12) & 0xF) == 0xF and (opcode & 0x00FF) == 0x65:
-            self.do_load_to_regs(_x)
-
-        elif ((opcode >> 12) & 0xF) == 0x8 and (opcode & 0x000F) == 0x0:
-            self.do_load_reg(_x, _y)
-
-        else:
-            raise RuntimeError(f"Unknown instruction {hex(opcode)}")
-
-        self.program_counter += 2
+        # ============================
+        # L'objectif de cet atelier est de compléter cette fonction
+        # ....
+        # ....
+        # ============================
 
     def read_rom(self, filename):
         with open(filename, 'rb') as f:
