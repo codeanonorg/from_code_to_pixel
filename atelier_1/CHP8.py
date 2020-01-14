@@ -117,7 +117,7 @@ class CHP8:
         assert self.safe_address(adr), f"address error [{adr}]"
         self.stack_pointer += 1
         self.stack[self.stack_pointer] = self.program_counter + 2
-        self.program_counter = adr
+        self.program_counter = adr-2
 
     def do_add_val(self, reg, val):
         """ 7xkk - ADD Vx, byte """
@@ -191,7 +191,6 @@ class CHP8:
         pressed = False
         for key in self.keyboard:
             if self.keyboard[key]:
-                print(f"KEY {key} LOADED")
                 self.registers[reg] = self.key_val[key]
                 pressed = True
 
@@ -225,7 +224,7 @@ class CHP8:
         assert self.safe_value(nibble), f"value error [{nibble}]"
         _x = self.registers[reg0]
         _y = self.registers[reg1]
-        print("drw", _x, _y)
+        #print("drw", _x, _y)
         for i in range(nibble):
             for j in range(8):
                 _sprite = self.memory[self.address_register+i]
@@ -332,8 +331,7 @@ class CHP8:
             self.screen.fill(pygame.Color(0, 0, 0))
             # UPDATE THE KEYBOARD STATE
             self.update_keyboard_state()
-            # print(self.keyboard)
-            # EXECUTE THE NEXT INSTRUCTION
+            # EXECUTE THE 10 NEXT INSTRUCTIONS
             for _ in range(11):
                 self.execute_next_instruction()
             # UPDATE THE SCREEN
@@ -343,6 +341,4 @@ class CHP8:
 
 vm = CHP8()
 vm.read_rom("./clou_asm.rom")
-# for i in range(0x200, vm.ram_size-2, 2):
-#     print(hex((vm.memory[i] << 8) | vm.memory[i+1]))
 vm.start()
