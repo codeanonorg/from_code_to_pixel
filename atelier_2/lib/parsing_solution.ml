@@ -9,6 +9,8 @@ type 'a parser = P of (string -> ('a * string) option)
 (** Appliquer un parseur sur une chaîne *)
 let parse (P p) inp = p inp
 
+let pure v = P (fun inp -> Some (v, inp))
+
 (* ------------------------------------------------- *)
 (* Utils                                             *)
 (* ------------------------------------------------- *)
@@ -58,7 +60,7 @@ let (<|>) = alternative
 
 (** Créer un parseur qui applique une fonction sur le résultat d'un 
     parseur existant *)
-let fmap f p = P (fun inp ->
+let (<$>) f p = P (fun inp ->
     match parse p inp with
     | None -> None
     | Some(x, r) -> Some (f x, r)

@@ -47,7 +47,7 @@ let (<|>) = alternative
 
 (** Créer un parseur qui applique une fonction sur le résultat d'un 
     parseur existant *)
-let fmap f p = P (fun inp ->
+let (<$>) f p = P (fun inp ->
     match parse p inp with
     | None -> None
     | Some(x, r) -> Some (f x, r)

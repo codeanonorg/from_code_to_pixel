@@ -47,66 +47,41 @@ let binop cons c p =
   let* _ = pchar c in
   let* _ = some (pblank) in
   let* b = p in
-  P (fun inp -> Some (cons a b, inp))
+  pure (cons a b)
 
-let rec parser_expression input = 
-  let parser =
-    (
-      let* a = P parser_terme in
-      let* _ = some (pblank) in
-      let* _ = pchar '+' in
-      let* _ = some (pblank) in
-      let* b = P parser_expression in
-      P (fun inp -> Some (Addition (a, b), inp))
-    )
-    <|>
-    (
-      let* a = P parser_terme in
-      let* _ = some (pblank) in
-      let* _ = pchar '-' in
-      let* _ = some (pblank) in
-      let* b = P parser_terme in
-      P (fun inp -> Some (Soustraction (a, b), inp))
-    )
-    <|> P parser_terme
-  in
-  parse parser input
-and parser_terme input =
-  let parser =
-    (
-      let* a = P parser_facteur in
-      let* _ = some (pblank) in
-      let* _ = pchar '*' in
-      let* _ = some (pblank) in
-      let* b = P parser_terme in
-      P (fun inp -> Some (Multiplication (a, b), inp))
-    )
-    <|>
-    (
-      let* a = P parser_facteur in
-      let* _ = some (pblank) in
-      let* _ = pchar '/' in
-      let* _ = some (pblank) in
-      let* b = P parser_terme in
-      P (fun inp -> Some (Division (a, b), inp))
-    )
-    <|> P parser_facteur
-  in
-  parse parser input
+let wraped l r p =
+  let* _ = l in
+  let* v = p in
+  let* _ = r in
+  pure v
 
-and parser_facteur input =
-  let parser =
-    (
-      let* _ = pchar '(' in
-      let* _ = some (pblank) in
-      let* e = P parser_expression in
-      let* _ = some (pblank) in
-      let* _ = pchar ')' in
-      P (fun inp -> Some (e, inp))
-    )
-    <|> (pnumber |> fmap (fun x -> Number (int_of_char x - 48)))
+
+let rec parser_factor inp =
+  let p =
+    (fun x -> Number (int_of_char x - 48)) <$> pnumber
+    <|>
+    wraped (pchar '(') (pchar ')') (P parser_expression)
   in
-  parse parser input
+  parse p inp
+and parser_terme inp =
+  let p =
+    binop (fun a b -> Multiplication (a, b)) '*' (P parser_factor)
+    <|>
+    binop (fun a b -> Division (a, b)) '/' (P parser_factor)
+    <|>
+    P parser_factor
+  in
+  parse p inp
+and parser_expression inp = 
+  let p =
+    binop (fun a b -> Addition (a, b)) '+' (P parser_terme)
+    <|>
+    binop (fun a b -> Soustraction (a, b)) '-' (P parser_terme)
+    <|>
+    P parser_terme
+  in
+  parse p inp
+
 
 let result expr x =
   print_endline (expr ^ ":");
