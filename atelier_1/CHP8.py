@@ -342,5 +342,5 @@ class CHP8:
 
 
 vm = CHP8()
-vm.read_rom("./clou_asm.rom")
+vm.read_rom("/Users/arthur/Downloads/dragon(2).rom")
 vm.start()

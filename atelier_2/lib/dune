@@ -1,0 +1,4 @@
+
+(executable 
+  (name parser_solution)
+  (modules parser_solution parsing_solution))
