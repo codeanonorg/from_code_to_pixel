@@ -1,5 +1,7 @@
 # Du code au pixel
 
+[![Run on Repl.it](https://repl.it/badge/github/codeanonorg/from_code_to_pixel)](https://repl.it/github/codeanonorg/from_code_to_pixel)
+
 ![](https://upload.wikimedia.org/wikipedia/commons/a/a1/Borne_arcade_pixel.png)
 
 Comment ça marche un **langage de programmation** ? Que se passe-t-il donc entre l'écriture du fameux code source, et l'intéraction entre un utilisateur et sa machine ? Dans cette série d'atelier **tout public**, nous essayerons de comprendre les dessous de la programmation avec l'exemple des **jeux vidéos**. Au cours des ateliers, les participants seront amenés à écrire leur propre **émulateur de console** de jeux vidéo, à programmer leur propre **jeu rétro** en langage assembleur, et même à essayer de *hacker* le comportement d'un jeu existant. La série d'atelier se clôturera par un **jeu de piste** numérique ancré dans l'univers d'un jeu vidéo mystérieux, les plus habiles réussiront peut-être à en tirer quelques secrets...
